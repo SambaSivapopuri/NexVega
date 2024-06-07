@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify
 import Algorithm
+import db
+
 app = Flask(__name__)
 
 user_data = {}
@@ -10,7 +12,8 @@ def add_user():
     name = request.json['name']
     email = request.json['email']
     if user_id not in user_data:
-        user_data[user_id] = Algorithm.User(user_id,name,email)
+        user_data[user_id] = Algorithm.User(user_id, name, email)
+        db.add_user_to_database(user_id, name, email) 
         return jsonify({"message": "User added successfully."}), 201
     return jsonify({"message": "User already exists."}), 400
 
@@ -22,6 +25,7 @@ def add_friend():
     if user_id in user_data and friend_id in user_data:
         user_data[user_id].add_friend(friend_id)
         user_data[friend_id].add_friend(user_id)
+        db.add_friendship_to_database(user_id, friend_id) 
         return jsonify({"message": "Friend added successfully."}), 201
     return jsonify({"message": "User not found."}), 404
 
@@ -30,6 +34,8 @@ def get_suggested_friends():
     user_id = int(request.args.get('user_id'))
     if user_id in user_data:
         suggestions = Algorithm.suggest_friends(user_id, user_data)
+        print(suggestions)
+        db.store_recommendations(user_id, suggestions) 
         return jsonify({"suggested_friends": suggestions}), 200
     return jsonify({"message": "User not found."}), 404
 
